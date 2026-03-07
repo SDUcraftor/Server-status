@@ -77,16 +77,21 @@ class MCSM_Server_Status {
      */
     public function render_shortcode($atts) {
         $atts = shortcode_atts([
-            'daemon' => '',
+            'daemon'  => '',
+            'debug'   => '0',
+            'nocache' => '0',
         ], $atts, 'mcsm_server_status');
 
         wp_enqueue_style('mcsm-server-status');
         wp_enqueue_script('mcsm-server-status');
 
         $daemon_id = !empty($atts['daemon']) ? sanitize_text_field($atts['daemon']) : '';
+        $debug_mode = in_array((string) $atts['debug'], ['1', 'true', 'yes'], true);
+        $no_cache = in_array((string) $atts['nocache'], ['1', 'true', 'yes'], true);
 
         // 首次加载时直接从后端获取数据（SEO友好 + 避免闪烁）
-        $servers = $this->api->get_instances($daemon_id);
+        $servers = $this->api->get_instances($daemon_id, $debug_mode, $no_cache);
+        $debug_trace = $debug_mode ? $this->api->get_debug_trace() : [];
 
         ob_start();
         include MCSM_SS_PLUGIN_DIR . 'templates/server-list.php';
@@ -100,7 +105,16 @@ class MCSM_Server_Status {
         check_ajax_referer('mcsm_status_nonce', 'nonce');
 
         $daemon_id = isset($_GET['daemon']) ? sanitize_text_field($_GET['daemon']) : '';
-        $servers   = $this->api->get_instances($daemon_id);
+        $debug_mode = isset($_GET['debug']) && in_array((string) $_GET['debug'], ['1', 'true', 'yes'], true);
+        $no_cache = isset($_GET['nocache']) && in_array((string) $_GET['nocache'], ['1', 'true', 'yes'], true);
+
+        $servers = $this->api->get_instances($daemon_id, $debug_mode, $no_cache);
+        if ($debug_mode) {
+            wp_send_json_success([
+                'servers' => $servers,
+                'debug'   => $this->api->get_debug_trace(),
+            ]);
+        }
 
         wp_send_json_success($servers);
     }

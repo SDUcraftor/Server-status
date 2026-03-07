@@ -10,6 +10,10 @@ if (!defined('ABSPATH')) {
  */
 class MCSM_API {
 
+    private $debug_enabled = false;
+    private $debug_trace = [];
+    private $force_refresh = false;
+
     private function get_panel_url() {
         return rtrim(get_option('mcsm_panel_url', ''), '/');
     }
@@ -73,6 +77,17 @@ class MCSM_API {
         $query_params['apikey'] = $this->get_api_key();
         $url = add_query_arg($query_params, $url);
 
+        $safe_query = $query_params;
+        if (isset($safe_query['apikey']) && $safe_query['apikey'] !== '') {
+            $safe_query['apikey'] = '***';
+        }
+        $this->trace([
+            'type' => 'request',
+            'endpoint' => $endpoint,
+            'query' => $safe_query,
+            'url' => add_query_arg($safe_query, $this->get_panel_url() . $endpoint),
+        ]);
+
         $response = wp_remote_get($url, [
             'timeout' => 10,
             'headers' => [
@@ -82,13 +97,30 @@ class MCSM_API {
         ]);
 
         if (is_wp_error($response)) {
+            $this->trace([
+                'type' => 'error',
+                'endpoint' => $endpoint,
+                'message' => $response->get_error_message(),
+            ]);
             return ['error' => $response->get_error_message()];
         }
 
+        $status_code = wp_remote_retrieve_response_code($response);
         $body = wp_remote_retrieve_body($response);
-        $data = json_decode($body, true);
+        $this->trace([
+            'type' => 'response',
+            'endpoint' => $endpoint,
+            'status' => $status_code,
+            'bodyPreview' => mb_substr((string) $body, 0, 300),
+        ]);
 
+        $data = json_decode($body, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
+            $this->trace([
+                'type' => 'error',
+                'endpoint' => $endpoint,
+                'message' => 'JSON parse failed: ' . json_last_error_msg(),
+            ]);
             return ['error' => '无法解析 API 响应'];
         }
 
@@ -98,15 +130,32 @@ class MCSM_API {
     /**
      * 获取实例列表（仅使用 mcsm_servers 配置）
      */
-    public function get_instances($daemon_id = '') {
+    public function get_instances($daemon_id = '', $debug = false, $force_refresh = false) {
+        $this->debug_enabled = (bool) $debug;
+        $this->debug_trace = [];
+        $this->force_refresh = (bool) $force_refresh;
+
         if (empty($this->get_panel_url()) || empty($this->get_api_key())) {
+            $this->trace([
+                'type' => 'error',
+                'message' => '缺少 mcsm_panel_url 或 mcsm_api_key 配置',
+            ]);
             return [];
         }
 
         $configured_servers = $this->get_configured_servers();
         if (empty($configured_servers)) {
+            $this->trace([
+                'type' => 'error',
+                'message' => 'mcsm_servers 为空或格式无效',
+            ]);
             return [];
         }
+
+        $this->trace([
+            'type' => 'info',
+            'message' => 'configured servers: ' . count($configured_servers),
+        ]);
 
         return $this->get_instances_from_configured_servers($configured_servers, $daemon_id);
     }
@@ -118,13 +167,28 @@ class MCSM_API {
         $ttl = intval(get_option('mcsm_cache_ttl', 30));
         $cache_key = 'mcsm_instance_detail_' . md5($daemon_id . '|' . $instance_uuid);
 
-        $cached = get_transient($cache_key);
-        if (false !== $cached) {
-            // 使用字符串哨兵避免缓存 null 失效
-            if ($cached === '__MCSM_NOT_FOUND__') {
-                return null;
+        if (!$this->force_refresh) {
+            $cached = get_transient($cache_key);
+            if (false !== $cached) {
+                $this->trace([
+                    'type' => 'cache_hit',
+                    'scope' => 'instance_detail',
+                    'daemonId' => $daemon_id,
+                    'uuid' => $instance_uuid,
+                ]);
+                // 使用字符串哨兵避免缓存 null 失效
+                if ($cached === '__MCSM_NOT_FOUND__') {
+                    return null;
+                }
+                return is_array($cached) ? $cached : null;
             }
-            return is_array($cached) ? $cached : null;
+        } else {
+            $this->trace([
+                'type' => 'info',
+                'message' => 'force refresh: skip instance cache',
+                'daemonId' => $daemon_id,
+                'uuid' => $instance_uuid,
+            ]);
         }
 
         $result = $this->request('/api/instance', [
@@ -158,9 +222,20 @@ class MCSM_API {
         }
 
         $cache_key = 'mcsm_instances_cfg_' . md5(wp_json_encode($configured_servers));
-        $cached = get_transient($cache_key);
-        if (false !== $cached) {
-            return $cached;
+        if (!$this->force_refresh) {
+            $cached = get_transient($cache_key);
+            if (false !== $cached) {
+                $this->trace([
+                    'type' => 'cache_hit',
+                    'scope' => 'instances_aggregate',
+                ]);
+                return $cached;
+            }
+        } else {
+            $this->trace([
+                'type' => 'info',
+                'message' => 'force refresh: skip aggregate cache',
+            ]);
         }
 
         $servers = [];
@@ -275,5 +350,15 @@ class MCSM_API {
         }
 
         return $server;
+    }
+
+    private function trace($entry) {
+        if ($this->debug_enabled) {
+            $this->debug_trace[] = $entry;
+        }
+    }
+
+    public function get_debug_trace() {
+        return $this->debug_trace;
     }
 }

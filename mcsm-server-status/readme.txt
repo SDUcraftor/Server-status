@@ -37,6 +37,12 @@ License: GPLv2 or later
 可选按节点筛选：
 `[mcsm_server_status daemon="你的DaemonID"]`
 
+查看后端请求调试信息（隐藏 API Key）：
+`[mcsm_server_status debug="1"]`
+
+强制绕过缓存并查看实时请求：
+`[mcsm_server_status debug="1" nocache="1"]`
+
 逐条服务器配置示例（设置页中的 `mcsm_servers`）：
 
 ```json
