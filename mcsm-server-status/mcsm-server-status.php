@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: MCSM Server Status
- * Plugin URI:  https://github.com/sduweb/mcsm-server-status
+ * Plugin URI:  https://github.com/SDUcraftor/Server-status
  * Description: 通过 MCSManager API 在 WordPress 页面展示 Minecraft 服务器状态列表
  * Version:     1.0.0
  * Author:      xhbsh
