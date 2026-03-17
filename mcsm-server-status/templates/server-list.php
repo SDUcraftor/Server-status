@@ -102,36 +102,35 @@ else :
                 </div>
                 <div class="float-content">
                     <p class="mcsm-server-desc"><?php echo esc_html($server['description']); ?></p>
-                    
-                    <?php if ($has_children): ?>
-                    <div class="mcsm-sub-servers">
-                        <?php
-                        // Parent (Group) Item
-                        $p_json = htmlspecialchars(json_encode($server), ENT_QUOTES, 'UTF-8');
-                        ?>
-                        <div class="mcsm-sub-item active mcsm-status-<?php echo $server['statusClass']; ?>" 
-                             onclick="mcsmSwitchChild(this)" 
-                             data-uuid="<?php echo esc_attr($server['instanceUuid']); ?>"
-                             data-payload="<?php echo $p_json; ?>">
-                            <span class="mcsm-sub-name"><?php echo esc_html($server['name']); ?></span>
-                            <span class="mcsm-sub-indicator"></span>
-                        </div>
-
-                        <?php foreach ($server['children'] as $child): 
-                            $c_json = htmlspecialchars(json_encode($child), ENT_QUOTES, 'UTF-8');
-                            $c_status = isset($child['statusClass']) ? $child['statusClass'] : 'unknown';
-                        ?>
-                        <div class="mcsm-sub-item mcsm-status-<?php echo $c_status; ?>" 
-                             onclick="mcsmSwitchChild(this)" 
-                             data-uuid="<?php echo esc_attr($child['instanceUuid']); ?>"
-                             data-payload="<?php echo $c_json; ?>">
-                            <span class="mcsm-sub-name"><?php echo esc_html($child['name']); ?></span>
-                            <span class="mcsm-sub-indicator"></span>
-                        </div>
-                        <?php endforeach; ?>
-                    </div>
-                    <?php endif; ?>
                 </div>
+                <?php if ($has_children): ?>
+                <div class="mcsm-sub-servers">
+                    <?php
+                    // Parent (Group) Item
+                    $p_json = htmlspecialchars(json_encode($server), ENT_QUOTES, 'UTF-8');
+                    ?>
+                    <div class="mcsm-sub-item active mcsm-status-<?php echo $server['statusClass']; ?>" 
+                         onclick="mcsmSwitchChild(this)" 
+                         data-uuid="<?php echo esc_attr($server['instanceUuid']); ?>"
+                         data-payload="<?php echo $p_json; ?>">
+                        <span class="mcsm-sub-name"><?php echo esc_html($server['name']); ?></span>
+                        <span class="mcsm-sub-indicator"></span>
+                    </div>
+
+                    <?php foreach ($server['children'] as $child): 
+                        $c_json = htmlspecialchars(json_encode($child), ENT_QUOTES, 'UTF-8');
+                        $c_status = isset($child['statusClass']) ? $child['statusClass'] : 'unknown';
+                    ?>
+                    <div class="mcsm-sub-item mcsm-status-<?php echo $c_status; ?>" 
+                         onclick="mcsmSwitchChild(this)" 
+                         data-uuid="<?php echo esc_attr($child['instanceUuid']); ?>"
+                         data-payload="<?php echo $c_json; ?>">
+                        <span class="mcsm-sub-name"><?php echo esc_html($child['name']); ?></span>
+                        <span class="mcsm-sub-indicator"></span>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
                 <footer class="entry-footer"></footer>
             </div>
         </div>  

@@ -161,12 +161,15 @@ class MCSM_Settings {
         return wp_json_encode($normalized, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
-    private function sanitize_server_item($item, $path) {
+    private function sanitize_server_item($item, $path, $fallback_daemon_id = '') {
         if (!is_array($item)) {
             return null;
         }
 
         $daemon_id = isset($item['daemonId']) ? trim((string) $item['daemonId']) : '';
+        if ($daemon_id === '' && $fallback_daemon_id !== '') {
+            $daemon_id = trim((string) $fallback_daemon_id);
+        }
         $instance_id = '';
         if (isset($item['instanceId'])) {
             $instance_id = trim((string) $item['instanceId']);
@@ -192,7 +195,7 @@ class MCSM_Settings {
         if (!empty($item['children']) && is_array($item['children'])) {
             $normalized['children'] = [];
             foreach ($item['children'] as $child_idx => $child_item) {
-                $child = $this->sanitize_server_item($child_item, $path . '.children.' . $child_idx);
+                $child = $this->sanitize_server_item($child_item, $path . '.children.' . $child_idx, $daemon_id);
                 if ($child) {
                     $normalized['children'][] = $child;
                 }

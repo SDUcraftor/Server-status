@@ -25,10 +25,13 @@ class MCSM_API {
     /**
      * Helper: Extract standard server config fields
      */
-    private function extract_server_config($item) {
+    private function extract_server_config($item, $fallback_daemon_id = '') {
         if (!is_array($item)) return null;
 
         $daemon_id = isset($item['daemonId']) ? trim((string) $item['daemonId']) : '';
+        if ($daemon_id === '' && $fallback_daemon_id !== '') {
+            $daemon_id = trim((string) $fallback_daemon_id);
+        }
         $uuid = '';
         if (isset($item['instanceUuid'])) {
             $uuid = trim((string) $item['instanceUuid']);
@@ -75,7 +78,7 @@ class MCSM_API {
 
             if (isset($item['children']) && is_array($item['children'])) {
                 foreach ($item['children'] as $child_item) {
-                    $child_config = $this->extract_server_config($child_item);
+                    $child_config = $this->extract_server_config($child_item, $config['daemonId']);
                     if ($child_config) {
                         $config['children'][] = $child_config; 
                     }
