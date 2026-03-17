@@ -238,6 +238,123 @@ class MCSM_API {
 
         return $this->apply_server_item_overrides($server, $item);
     }
+
+    private function parse_int($value) {
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (is_float($value) || (is_string($value) && is_numeric(trim($value)))) {
+            return intval($value);
+        }
+
+        return null;
+    }
+
+    private function parse_player_pair($value) {
+        if (is_string($value) && preg_match('/^\s*(\d+)\s*\/\s*(\d+)\s*$/', $value, $m)) {
+            return [intval($m[1]), intval($m[2])];
+        }
+
+        if (is_array($value)) {
+            $online = null;
+            $max = null;
+            foreach (['currentPlayers', 'current_players', 'onlinePlayers', 'playersOnline', 'online', 'count'] as $key) {
+                if (array_key_exists($key, $value)) {
+                    $online = $this->parse_int($value[$key]);
+                    if (null !== $online) break;
+                }
+            }
+            foreach (['maxPlayers', 'max_players', 'maxPlayer', 'playerMax', 'max'] as $key) {
+                if (array_key_exists($key, $value)) {
+                    $max = $this->parse_int($value[$key]);
+                    if (null !== $max) break;
+                }
+            }
+            if (null !== $online || null !== $max) {
+                return [null !== $online ? $online : -1, null !== $max ? $max : -1];
+            }
+        }
+
+        return null;
+    }
+
+    private function find_first_value_by_keys($data, $keys) {
+        if (!is_array($data)) {
+            return null;
+        }
+
+        foreach ($data as $key => $value) {
+            if (in_array(strtolower((string) $key), $keys, true)) {
+                return $value;
+            }
+        }
+
+        foreach ($data as $value) {
+            if (is_array($value)) {
+                $found = $this->find_first_value_by_keys($value, $keys);
+                if (null !== $found) {
+                    return $found;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function extract_player_counts($instance, $info, $proc, $config) {
+        $sources = [$info, $proc, $instance, $config];
+        $current_keys = ['currentplayers', 'current_players', 'onlineplayers', 'playersonline', 'playercount', 'online'];
+        $max_keys = ['maxplayers', 'max_players', 'maxplayer', 'playermax'];
+
+        $current = -1;
+        $max = -1;
+
+        foreach ($sources as $source) {
+            if (!is_array($source)) {
+                continue;
+            }
+
+            if ($current < 0) {
+                $raw_current = $this->find_first_value_by_keys($source, $current_keys);
+                $parsed_current = $this->parse_int($raw_current);
+                if (null !== $parsed_current) {
+                    $current = $parsed_current;
+                }
+            }
+
+            if ($max < 0) {
+                $raw_max = $this->find_first_value_by_keys($source, $max_keys);
+                $parsed_max = $this->parse_int($raw_max);
+                if (null !== $parsed_max) {
+                    $max = $parsed_max;
+                }
+            }
+
+            if ($current >= 0 && $max >= 0) {
+                break;
+            }
+        }
+
+        if ($current < 0 || $max < 0) {
+            foreach ($sources as $source) {
+                if (!is_array($source)) {
+                    continue;
+                }
+                $pair_raw = $this->find_first_value_by_keys($source, ['players', 'player', 'online']);
+                $pair = $this->parse_player_pair($pair_raw);
+                if (is_array($pair)) {
+                    if ($current < 0 && $pair[0] >= 0) $current = $pair[0];
+                    if ($max < 0 && $pair[1] >= 0) $max = $pair[1];
+                    if ($current >= 0 && $max >= 0) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        return [$current, $max];
+    }
     
     /**
      * 从逐条配置中获取实例（按配置顺序输出）
@@ -314,8 +431,7 @@ class MCSM_API {
 
         $name = isset($config['nickname']) ? $config['nickname'] : '';
         $version = isset($info['version']) ? $info['version'] : '';
-        $current_players = isset($info['currentPlayers']) ? intval($info['currentPlayers']) : -1;
-        $max_players = isset($info['maxPlayers']) ? intval($info['maxPlayers']) : -1;
+        list($current_players, $max_players) = $this->extract_player_counts($instance, $info, $proc, $config);
         $cpu = isset($proc['cpu']) ? round($proc['cpu'], 1) : 0;
         $memory = isset($proc['memory']) ? $proc['memory'] : 0;
         $elapsed = isset($proc['elapsed']) ? intval($proc['elapsed']) : 0;

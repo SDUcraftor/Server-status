@@ -24,6 +24,63 @@
     transition: opacity 0.2s;
 }
 
+/* --- Card Styles --- */
+/* Use wrapper selector to potentially increase specificity */
+.mcsm-server-list .mcsm-server-card {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    position: relative;
+    margin: 0 0 20px;
+    border-radius: 10px;
+    box-shadow: 0 1px 30px -4px #e8e8e8; /* Fallback color */
+    box-shadow: 0 1px 30px -4px var(--post-list-thumb, #e8e8e8);
+    background-color: rgba(255, 255, 255, .90);
+    transition: all 0.3s ease;
+    padding: 0; /* Reset */
+    overflow: hidden; /* Ensure rounded corners */
+}
+
+/* Post Content Reset - Mimic inner padding/sizing */
+.mcsm-server-card .post-content {
+    width: 100%;
+    height: 100%;
+    /* Relative positioning for absolute children */
+    position: relative;
+    padding: 20px; /* Optional default padding */
+    box-sizing: border-box;
+    min-height: 154px; /* Ensure height */
+}
+
+/* Entry Title */
+.mcsm-server-card .entry-title {
+    font-size: 18px;
+    margin: 0 0 10px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.mcsm-server-card .entry-title a {
+    color: #505050;
+    text-decoration: none;
+}
+.mcsm-server-card .entry-title a:hover {
+    color: #2196f3;
+}
+
+/* Post Meta */
+.mcsm-server-card .post-meta {
+    margin-bottom: 15px;
+    font-size: 13px;
+    color: #888;
+}
+
+.mcsm-server-card .mcs-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
 /* Icon adjustments */
 .mcsm-icon {
     object-fit: cover;

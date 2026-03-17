@@ -109,9 +109,12 @@
 
             // 更新在线人数
             var playersText = card.querySelector('.mcsm-players-text');
-            if (playersText && dataToShow.currentPlayers >= 0) {
-                var pText = dataToShow.currentPlayers;
-                if (dataToShow.maxPlayers > 0) pText += '/' + dataToShow.maxPlayers;
+            if (playersText) {
+                var pText = '--';
+                if (dataToShow.currentPlayers >= 0) {
+                    pText = dataToShow.currentPlayers;
+                    if (dataToShow.maxPlayers > 0) pText += '/' + dataToShow.maxPlayers;
+                }
                 playersText.textContent = pText;
             }
 
@@ -218,7 +221,7 @@
         // Players
         var playersText = card.querySelector('.mcsm-players-text');
         if (playersText) {
-             var pText = '0/0';
+             var pText = '--';
              if (payload.currentPlayers >= 0) {
                  pText = payload.currentPlayers;
                  if (payload.maxPlayers > 0) pText += '/' + payload.maxPlayers;

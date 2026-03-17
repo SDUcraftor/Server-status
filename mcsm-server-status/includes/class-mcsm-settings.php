@@ -12,6 +12,21 @@ class MCSM_Settings {
     public function __construct() {
         add_action('admin_menu', [$this, 'add_menu']);
         add_action('admin_init', [$this, 'register_settings']);
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
+    }
+
+    public function enqueue_admin_assets($hook) {
+        if ($hook !== 'settings_page_mcsm-server-status') {
+            return;
+        }
+
+        wp_enqueue_script(
+            'mcsm-admin-settings',
+            MCSM_SS_PLUGIN_URL . 'assets/js/admin-settings.js',
+            [],
+            MCSM_SS_VERSION,
+            true
+        );
     }
 
     public function add_menu() {
@@ -68,7 +83,7 @@ class MCSM_Settings {
     }
 
     public function section_servers_desc() {
-        echo '<p>仅保留新配置。每条服务器必须包含 daemonId 和 instanceId（或 instanceUuid）。</p>';
+        echo '<p>推荐使用可视化编辑器维护服务器列表。每条服务器必须包含 daemonId 和 instanceId（或 instanceUuid），支持 children 子服务器。</p>';
     }
 
     public function field_servers() {
@@ -83,12 +98,38 @@ class MCSM_Settings {
                     'link'        => '/server/lobby',
                     'tag'         => 'SJMC',
                     'description' => '大厅服务器',
+                    'children'    => [
+                        [
+                            'daemonId'   => 'daemon-id-1',
+                            'instanceId' => 'instance-uuid-2',
+                            'name'       => 'MUA Lobby-2',
+                        ],
+                    ],
                 ],
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
 
-        echo '<textarea name="mcsm_servers" rows="14" class="large-text code">' . esc_textarea($val) . '</textarea>';
-        echo '<p class="description">JSON 数组。必填: daemonId, instanceId/instanceUuid。可选: name, icon, link, tag, description。</p>';
+        echo '<div id="mcsm-servers-editor" class="mcsm-servers-editor"></div>';
+        echo '<p><button type="button" class="button button-secondary" id="mcsm-add-server-btn">添加服务器</button></p>';
+
+        echo '<input type="hidden" name="mcsm_servers" id="mcsm_servers" value="' . esc_attr($val) . '" />';
+
+        echo '<details style="margin-top:10px;">';
+        echo '<summary>高级模式：JSON 导入/查看</summary>';
+        echo '<p class="description">可先编辑 JSON，再点击“从 JSON 导入到可视化编辑器”。保存时以可视化编辑器内容为准。</p>';
+        echo '<textarea id="mcsm_servers_manual" rows="14" class="large-text code">' . esc_textarea($val) . '</textarea>';
+        echo '<p><button type="button" class="button" id="mcsm-import-json-btn">从 JSON 导入到可视化编辑器</button></p>';
+        echo '</details>';
+
+        echo '<style>
+            .mcsm-servers-editor{display:flex;flex-direction:column;gap:12px}
+            .mcsm-server-item,.mcsm-child-item{border:1px solid #dcdcde;background:#fff;padding:12px;border-radius:6px}
+            .mcsm-child-list{margin-top:10px;padding-top:10px;border-top:1px dashed #dcdcde;display:flex;flex-direction:column;gap:8px}
+            .mcsm-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+            .mcsm-field{display:flex;flex-direction:column;gap:4px}
+            .mcsm-field label{font-size:12px;color:#50575e}
+            .mcsm-item-actions{margin-top:10px;display:flex;gap:8px}
+        </style>';
     }
 
     public function field_refresh_interval() {
@@ -111,35 +152,54 @@ class MCSM_Settings {
 
         $normalized = [];
         foreach ($decoded as $idx => $item) {
-            if (!is_array($item)) {
-                continue;
+            $normalized_item = $this->sanitize_server_item($item, (string) $idx);
+            if ($normalized_item) {
+                $normalized[] = $normalized_item;
             }
-
-            $daemon_id = isset($item['daemonId']) ? trim((string) $item['daemonId']) : '';
-            $instance_id = '';
-            if (isset($item['instanceId'])) {
-                $instance_id = trim((string) $item['instanceId']);
-            } elseif (isset($item['instanceUuid'])) {
-                $instance_id = trim((string) $item['instanceUuid']);
-            }
-
-            if ($daemon_id === '' || $instance_id === '') {
-                add_settings_error('mcsm_servers', 'missing_required_fields_' . $idx, '第 ' . ($idx + 1) . ' 项缺少 daemonId 或 instanceId/instanceUuid');
-                continue;
-            }
-
-            $normalized[] = [
-                'daemonId'     => $daemon_id,
-                'instanceUuid' => $instance_id,
-                'name'         => isset($item['name']) ? sanitize_text_field($item['name']) : '',
-                'icon'         => isset($item['icon']) ? esc_url_raw($item['icon']) : '',
-                'link'         => isset($item['link']) ? esc_url_raw($item['link']) : '',
-                'tag'          => isset($item['tag']) ? sanitize_text_field($item['tag']) : '',
-                'description'  => isset($item['description']) ? sanitize_text_field($item['description']) : '',
-            ];
         }
 
         return wp_json_encode($normalized, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    private function sanitize_server_item($item, $path) {
+        if (!is_array($item)) {
+            return null;
+        }
+
+        $daemon_id = isset($item['daemonId']) ? trim((string) $item['daemonId']) : '';
+        $instance_id = '';
+        if (isset($item['instanceId'])) {
+            $instance_id = trim((string) $item['instanceId']);
+        } elseif (isset($item['instanceUuid'])) {
+            $instance_id = trim((string) $item['instanceUuid']);
+        }
+
+        if ($daemon_id === '' || $instance_id === '') {
+            add_settings_error('mcsm_servers', 'missing_required_fields_' . md5($path), '配置项 ' . $path . ' 缺少 daemonId 或 instanceId/instanceUuid');
+            return null;
+        }
+
+        $normalized = [
+            'daemonId'     => $daemon_id,
+            'instanceUuid' => $instance_id,
+            'name'         => isset($item['name']) ? sanitize_text_field($item['name']) : '',
+            'icon'         => isset($item['icon']) ? esc_url_raw($item['icon']) : '',
+            'link'         => isset($item['link']) ? esc_url_raw($item['link']) : '',
+            'tag'          => isset($item['tag']) ? sanitize_text_field($item['tag']) : '',
+            'description'  => isset($item['description']) ? sanitize_text_field($item['description']) : '',
+        ];
+
+        if (!empty($item['children']) && is_array($item['children'])) {
+            $normalized['children'] = [];
+            foreach ($item['children'] as $child_idx => $child_item) {
+                $child = $this->sanitize_server_item($child_item, $path . '.children.' . $child_idx);
+                if ($child) {
+                    $normalized['children'][] = $child;
+                }
+            }
+        }
+
+        return $normalized;
     }
 
     // ======================== 页面渲染 ========================
@@ -169,4 +229,3 @@ class MCSM_Settings {
         <?php
     }
 }
-

@@ -42,7 +42,7 @@ else :
         
         // Removed redundant link wrapping here as it is handled in template now
 
-        $players_text = '0/0'; // Default
+        $players_text = '--';
         if ($server['currentPlayers'] >= 0) {
             $players_text = $server['currentPlayers'];
             if ($server['maxPlayers'] > 0) $players_text .= '/' . $server['maxPlayers'];

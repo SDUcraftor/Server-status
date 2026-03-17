@@ -4,8 +4,8 @@
  * Plugin URI:  https://github.com/sduweb/mcsm-server-status
  * Description: 通过 MCSManager API 在 WordPress 页面展示 Minecraft 服务器状态列表
  * Version:     1.0.0
- * Author:      SDUWeb
- * License:     GPL-2.0+
+ * Author:      xhbsh
+ * License:     MIT
  * Text Domain: mcsm-server-status
  */
 
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('MCSM_SS_VERSION', '1.0.0');
+define('MCSM_SS_VERSION', '1.0.1');
 define('MCSM_SS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('MCSM_SS_PLUGIN_URL', plugin_dir_url(__FILE__));
 
