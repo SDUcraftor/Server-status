@@ -1,149 +1,86 @@
 /**
  * MCSM Server Status
- * 纯 div 结构，无 article/h2/p，主题无法匹配
+ * Adapted to work with theme's .post-list-thumb styles
  */
 
 .mcsm-server-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin: 12px 0;
-    padding: 0;
+    gap: 15px;
+    margin: 15px 0;
 }
 
-/* 卡片 */
-.mcsm-card {
-    position: relative;
-    display: block;
-    overflow: hidden;
-    border-radius: 10px;
-    background: #fff;
-    box-shadow: 0 1px 8px rgba(0,0,0,.07);
+/* Status Indicator Colors */
+.mcsm-status-running .mcsm-status-indicator { color: #40c057; }
+.mcsm-status-stopped .mcsm-status-indicator { color: #ced4da; }
+.mcsm-status-starting .mcsm-status-indicator,
+.mcsm-status-stopping .mcsm-status-indicator { color: #fab005; }
+.mcsm-status-busy .mcsm-status-indicator     { color: #fa5252; }
+.mcsm-status-unknown .mcsm-status-indicator  { color: #868e96; }
+
+/* Refreshing State */
+.mcsm-server-card.mcsm-refreshing {
+    opacity: 0.6;
+    transition: opacity 0.2s;
 }
 
-/* 左侧状态条 */
-.mcsm-card::before {
-    content: "";
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 4px;
-    background: #ced4da;
-}
-.mcsm-status-running::before  { background: #40c057; }
-.mcsm-status-stopped::before  { background: #ced4da; }
-.mcsm-status-starting::before,
-.mcsm-status-stopping::before { background: #fab005; }
-.mcsm-status-busy::before     { background: #fa5252; }
-.mcsm-status-unknown::before  { background: #868e96; }
-
-/* flex 内容行 */
-.mcsm-inner {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 14px 10px 18px;
-}
-
-/* 图标 */
+/* Icon adjustments */
 .mcsm-icon {
-    flex: 0 0 40px;
-    width: 40px;
-    height: 40px;
-    border-radius: 6px;
     object-fit: cover;
     image-rendering: pixelated;
-    display: block;
 }
 
-/* 信息区 */
-.mcsm-info {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+/* Mobile responsive fixes if needed */
+@media (max-width: 768px) {
+    .mcsm-server-card {
+        height: auto !important;
+    }
 }
 
-/* 名称 */
-.mcsm-name {
-    font-size: 15px;
-    font-weight: 700;
-    line-height: 1.3;
-    color: #212529;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.mcsm-name a { color: inherit; text-decoration: none; }
-.mcsm-name a:hover { color: #1c7ed6; }
-
-/* meta 行 */
-.mcsm-meta {
+/* Sub-server switcher */
+.mcsm-sub-servers {
     display: flex;
     flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px dashed #e9ecef;
+}
+
+.mcsm-sub-item {
+    display: inline-flex;
     align-items: center;
-    gap: 1px 8px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    cursor: pointer;
     font-size: 12px;
-    line-height: 1.4;
-    color: #5c6670;
-}
-.mcsm-mi { white-space: nowrap; }
-.mcsm-mi i { margin-right: 3px; font-size: inherit; }
-.mcsm-status-indicator { font-size: 7px; vertical-align: middle; }
-
-/* 状态颜色 */
-.mcsm-status-running .mcsm-meta-status  { color: #2f9e44; }
-.mcsm-status-stopped .mcsm-meta-status  { color: #868e96; }
-.mcsm-status-starting .mcsm-meta-status,
-.mcsm-status-stopping .mcsm-meta-status { color: #e67700; }
-.mcsm-status-busy .mcsm-meta-status     { color: #e03131; }
-.mcsm-status-unknown .mcsm-meta-status  { color: #6c757d; }
-
-/* 描述 */
-.mcsm-server-desc {
-    font-size: 11px;
-    line-height: 1.3;
-    color: #868e96;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    color: #495057;
+    transition: all 0.2s;
 }
 
-/* 空状态 */
-.mcsm-empty {
-    padding: 20px;
-    text-align: center;
-    color: #868e96;
-    font-size: 13px;
+.mcsm-sub-item:hover {
+    background: #e9ecef;
 }
 
-/* 刷新 */
-.mcsm-card.mcsm-refreshing { opacity: .6; transition: opacity .2s; }
-
-/* 响应式 */
-@media (max-width: 720px) {
-    .mcsm-inner { padding: 8px 10px 8px 14px; gap: 10px; }
-    .mcsm-icon { width: 36px; height: 36px; flex-basis: 36px; }
-    .mcsm-name { font-size: 14px; }
-    .mcsm-meta { font-size: 11px; }
+.mcsm-sub-item.active {
+    background: #e7f5ff;
+    border-color: #74c0fc;
+    color: #1864ab;
 }
 
-/* 深色 */
-@media (prefers-color-scheme: dark) {
-    .mcsm-card { background: #2b2d30; box-shadow: 0 1px 8px rgba(0,0,0,.3); }
-    .mcsm-name, .mcsm-name a { color: #e9ecef; }
-    .mcsm-name a:hover { color: #74c0fc; }
-    .mcsm-meta { color: #adb5bd; }
-    .mcsm-server-desc { color: #909296; }
-    .mcsm-card::before { background: #495057; }
+.mcsm-sub-indicator {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-left: 6px;
+    background-color: #ccc;
 }
 
-/* 调试面板 */
-.mcsm-debug-panel { margin-top: 12px; border: 1px solid #dee2e6; border-radius: 8px; background: #f8f9fa; padding: 8px 10px; }
-.mcsm-debug-panel summary { cursor: pointer; font-size: 13px; color: #495057; }
-.mcsm-debug-panel pre { margin: 8px 0 0; padding: 10px; max-height: 260px; overflow: auto; font-size: 12px; line-height: 1.5; background: #fff; border-radius: 6px; border: 1px solid #e9ecef; }
-@media (prefers-color-scheme: dark) {
-    .mcsm-debug-panel { background: #343a40; border-color: #495057; }
-    .mcsm-debug-panel summary { color: #dee2e6; }
-    .mcsm-debug-panel pre { background: #212529; border-color: #495057; color: #ced4da; }
-}
+.mcsm-status-running .mcsm-sub-indicator { background-color: #40c057; }
+.mcsm-status-stopped .mcsm-sub-indicator { background-color: #ced4da; }
+.mcsm-status-starting .mcsm-sub-indicator,
+.mcsm-status-stopping .mcsm-sub-indicator { background-color: #fab005; }
+.mcsm-status-busy .mcsm-sub-indicator { background-color: #fa5252; }

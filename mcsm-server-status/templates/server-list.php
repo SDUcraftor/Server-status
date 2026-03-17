@@ -39,11 +39,10 @@ else :
         $status_label = isset($status_labels[$status_code]) ? $status_labels[$status_code] : '未知';
         $status_class = esc_attr($server['statusClass']);
         $name_html    = esc_html($server['name']);
-        if (!empty($server['link'])) {
-            $name_html = '<a href="' . esc_url($server['link']) . '">' . $name_html . '</a>';
-        }
+        
+        // Removed redundant link wrapping here as it is handled in template now
 
-        $players_text = '';
+        $players_text = '0/0'; // Default
         if ($server['currentPlayers'] >= 0) {
             $players_text = $server['currentPlayers'];
             if ($server['maxPlayers'] > 0) $players_text .= '/' . $server['maxPlayers'];
@@ -53,28 +52,91 @@ else :
         if ($status_code === 3 && $server['elapsed'] > 0) {
             $uptime_text = mcsm_format_uptime($server['elapsed']);
         }
+        
+        $has_children = !empty($server['children']) && is_array($server['children']);
+?>
+    <article class="post post-list-thumb post-list-show mcsm-server-card mcsm-status-<?php echo $status_class; ?>" 
+             data-uuid="<?php echo esc_attr($server['instanceUuid']); ?>" 
+             data-showing-uuid="<?php echo esc_attr($server['instanceUuid']); ?>"
+             itemscope="" itemtype="http://schema.org/BlogPosting" 
+             style="height: auto; min-height: 154px; will-change: auto;">
+        
+        <div class="post-content">
+            <div class="img" style="height: 64px;width: 64px;position:absolute;left: 45px;top: 45px;" name="ServerImg">
+                <img class="mcsm-icon" id="favicon_<?php echo $index; ?>" style="height: 64px;width: 64px; border-radius: 6px;" src="<?php echo esc_url($icon); ?>" alt="<?php echo esc_attr($server['name']); ?>">
+            </div>
+            <div style="margin-left: 154px">
+                <h2 class="entry-title">
+                    <?php if (!empty($server['link'])): ?>
+                        <a href="<?php echo esc_url($server['link']); ?>"><?php echo $name_html; ?></a>
+                    <?php else: ?>
+                        <?php echo $name_html; ?>
+                    <?php endif; ?>
+                </h2>
+                <div class="post-meta">
+                    <div class="mcs-status" name="<?php echo $status_code; ?>">
+                        <span class="mcsm-meta-item mcsm-players">
+                            <i class="fa fa-regular fa-user"></i><em class="mcsm-players-text"><?php echo esc_html($players_text); ?></em>
+                        </span>
+                        
+                        <span style="margin-left: 10px; <?php echo empty($uptime_text) ? 'display:none;' : ''; ?>" class="mcsm-meta-item mcsm-uptime">
+                            <i class="fa fa-solid fa-stopwatch"></i><em class="mcsm-uptime-text"><?php echo esc_html($uptime_text); ?></em>
+                        </span>
 
-        // 构建 meta spans
-        $meta = '';
-        if ($players_text !== '') {
-            $meta .= '<span class="mcsm-mi"><i class="fa fa-regular fa-user"></i>' . esc_html($players_text) . '</span>';
-        }
-        if ($uptime_text !== '') {
-            $meta .= '<span class="mcsm-mi"><i class="fa fa-solid fa-stopwatch"></i>' . esc_html($uptime_text) . '</span>';
-        }
-        if (!empty($server['version'])) {
-            $meta .= '<span class="mcsm-mi"><i class="fa fa-regular fa-tag"></i>' . esc_html($server['version']) . '</span>';
-        }
-        if (!empty($server['tag'])) {
-            $meta .= '<span class="mcsm-mi"><i class="fa fa-regular fa-location-dot"></i>' . esc_html($server['tag']) . '</span>';
-        }
-        $meta .= '<span class="mcsm-mi mcsm-meta-status"><i class="fa fa-circle mcsm-status-indicator"></i>' . esc_html($status_label) . '</span>';
+                        <?php if (!empty($server['version'])): ?>
+                        <span style="margin-left: 10px;" class="mcsm-meta-item mcsm-version">
+                            <i class="fa fa-regular fa-tag"></i><em class="mcsm-version-text"><?php echo esc_html($server['version']); ?></em>
+                        </span>
+                        <?php endif; ?>
 
-        $desc_html = '';
-        if (!empty($server['description'])) {
-            $desc_html = '<div class="mcsm-server-desc">' . esc_html($server['description']) . '</div>';
-        }
-?><div class="mcsm-card mcsm-status-<?php echo $status_class; ?>" data-uuid="<?php echo esc_attr($server['instanceUuid']); ?>"><div class="mcsm-inner"><img class="mcsm-icon" src="<?php echo esc_url($icon); ?>" alt="<?php echo esc_attr($server['name']); ?>"><div class="mcsm-info"><div class="mcsm-name"><?php echo $name_html; ?></div><div class="mcsm-meta"><?php echo $meta; ?></div><?php echo $desc_html; ?></div></div></div><?php
+                        <?php if (!empty($server['tag'])): ?>
+                        <span style="margin-left: 10px;" class="mcsm-meta-item mcsm-location">
+                            <i class="fa fa-regular fa-location-dot"></i><?php echo esc_html($server['tag']); ?>
+                        </span>
+                        <?php endif; ?>
+
+                        <span style="margin-left: 10px;" class="mcsm-meta-item mcsm-status-badge">
+                            <i class="fa fa-circle mcsm-status-indicator"></i><em class="mcsm-status-text"><?php echo esc_html($status_label); ?></em>
+                        </span>
+                    </div>
+                </div>
+                <div class="float-content">
+                    <p class="mcsm-server-desc"><?php echo esc_html($server['description']); ?></p>
+                    
+                    <?php if ($has_children): ?>
+                    <div class="mcsm-sub-servers">
+                        <?php
+                        // Parent (Group) Item
+                        $p_json = htmlspecialchars(json_encode($server), ENT_QUOTES, 'UTF-8');
+                        ?>
+                        <div class="mcsm-sub-item active mcsm-status-<?php echo $server['statusClass']; ?>" 
+                             onclick="mcsmSwitchChild(this)" 
+                             data-uuid="<?php echo esc_attr($server['instanceUuid']); ?>"
+                             data-payload="<?php echo $p_json; ?>">
+                            <span class="mcsm-sub-name"><?php echo esc_html($server['name']); ?></span>
+                            <span class="mcsm-sub-indicator"></span>
+                        </div>
+
+                        <?php foreach ($server['children'] as $child): 
+                            $c_json = htmlspecialchars(json_encode($child), ENT_QUOTES, 'UTF-8');
+                            $c_status = isset($child['statusClass']) ? $child['statusClass'] : 'unknown';
+                        ?>
+                        <div class="mcsm-sub-item mcsm-status-<?php echo $c_status; ?>" 
+                             onclick="mcsmSwitchChild(this)" 
+                             data-uuid="<?php echo esc_attr($child['instanceUuid']); ?>"
+                             data-payload="<?php echo $c_json; ?>">
+                            <span class="mcsm-sub-name"><?php echo esc_html($child['name']); ?></span>
+                            <span class="mcsm-sub-indicator"></span>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <footer class="entry-footer"></footer>
+            </div>
+        </div>  
+    </article>
+<?php
     endforeach;
 endif;
 

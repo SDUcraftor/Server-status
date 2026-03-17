@@ -23,6 +23,36 @@ class MCSM_API {
     }
 
     /**
+     * Helper: Extract standard server config fields
+     */
+    private function extract_server_config($item) {
+        if (!is_array($item)) return null;
+
+        $daemon_id = isset($item['daemonId']) ? trim((string) $item['daemonId']) : '';
+        $uuid = '';
+        if (isset($item['instanceUuid'])) {
+            $uuid = trim((string) $item['instanceUuid']);
+        } elseif (isset($item['instanceId'])) {
+            $uuid = trim((string) $item['instanceId']);
+        }
+
+        if ($daemon_id === '' || $uuid === '') {
+            return null;
+        }
+
+        return [
+            'daemonId'     => $daemon_id,
+            'instanceUuid' => $uuid,
+            'name'         => isset($item['name']) ? (string) $item['name'] : '',
+            'icon'         => isset($item['icon']) ? (string) $item['icon'] : '',
+            'link'         => isset($item['link']) ? (string) $item['link'] : '',
+            'tag'          => isset($item['tag']) ? (string) $item['tag'] : '',
+            'description'  => isset($item['description']) ? (string) $item['description'] : '',
+            'children'     => [],
+        ];
+    }
+
+    /**
      * 读取“逐条服务器配置”
      */
     private function get_configured_servers() {
@@ -38,31 +68,21 @@ class MCSM_API {
 
         $servers = [];
         foreach ($decoded as $item) {
-            if (!is_array($item)) {
+            $config = $this->extract_server_config($item);
+            if (!$config) {
                 continue;
             }
 
-            $daemon_id = isset($item['daemonId']) ? trim((string) $item['daemonId']) : '';
-            $uuid = '';
-            if (isset($item['instanceUuid'])) {
-                $uuid = trim((string) $item['instanceUuid']);
-            } elseif (isset($item['instanceId'])) {
-                $uuid = trim((string) $item['instanceId']);
+            if (isset($item['children']) && is_array($item['children'])) {
+                foreach ($item['children'] as $child_item) {
+                    $child_config = $this->extract_server_config($child_item);
+                    if ($child_config) {
+                        $config['children'][] = $child_config; 
+                    }
+                }
             }
 
-            if ($daemon_id === '' || $uuid === '') {
-                continue;
-            }
-
-            $servers[] = [
-                'daemonId'     => $daemon_id,
-                'instanceUuid' => $uuid,
-                'name'         => isset($item['name']) ? (string) $item['name'] : '',
-                'icon'         => isset($item['icon']) ? (string) $item['icon'] : '',
-                'link'         => isset($item['link']) ? (string) $item['link'] : '',
-                'tag'          => isset($item['tag']) ? (string) $item['tag'] : '',
-                'description'  => isset($item['description']) ? (string) $item['description'] : '',
-            ];
+            $servers[] = $config;
         }
 
         return $servers;
@@ -207,6 +227,18 @@ class MCSM_API {
         return null;
     }
 
+    private function fetch_single_server($item) {
+        $detail = $this->get_instance_detail($item['daemonId'], $item['instanceUuid']);
+
+        if (is_array($detail)) {
+            $server = $this->format_instance($detail, $item['daemonId']);
+        } else {
+            $server = $this->build_missing_instance($item);
+        }
+
+        return $this->apply_server_item_overrides($server, $item);
+    }
+    
     /**
      * 从逐条配置中获取实例（按配置顺序输出）
      */
@@ -240,15 +272,18 @@ class MCSM_API {
 
         $servers = [];
         foreach ($configured_servers as $item) {
-            $detail = $this->get_instance_detail($item['daemonId'], $item['instanceUuid']);
-
-            if (is_array($detail)) {
-                $server = $this->format_instance($detail, $item['daemonId']);
+            $server = $this->fetch_single_server($item);
+            
+            if (!empty($item['children'])) {
+                $server['children'] = [];
+                foreach ($item['children'] as $child_config) {
+                    $server['children'][] = $this->fetch_single_server($child_config);
+                }
             } else {
-                $server = $this->build_missing_instance($item);
+                $server['children'] = [];
             }
 
-            $servers[] = $this->apply_server_item_overrides($server, $item);
+            $servers[] = $server;
         }
 
         $ttl = intval(get_option('mcsm_cache_ttl', 30));
