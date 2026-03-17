@@ -12,11 +12,18 @@
 
 /* Status Indicator Colors */
 .mcsm-status-running .mcsm-status-indicator { color: #40c057; }
-.mcsm-status-stopped .mcsm-status-indicator { color: #ced4da; }
+.mcsm-status-stopped .mcsm-status-indicator { color: #fa5252; }
 .mcsm-status-starting .mcsm-status-indicator,
 .mcsm-status-stopping .mcsm-status-indicator { color: #fab005; }
-.mcsm-status-busy .mcsm-status-indicator     { color: #fa5252; }
+.mcsm-status-busy .mcsm-status-indicator     { color: #fab005; }
 .mcsm-status-unknown .mcsm-status-indicator  { color: #868e96; }
+
+.mcsm-status-running .mcsm-status-text { color: #2b8a3e; }
+.mcsm-status-stopped .mcsm-status-text { color: #c92a2a; }
+.mcsm-status-starting .mcsm-status-text,
+.mcsm-status-stopping .mcsm-status-text,
+.mcsm-status-busy .mcsm-status-text { color: #e67700; }
+.mcsm-status-unknown .mcsm-status-text { color: #868e96; }
 
 /* Refreshing State */
 .mcsm-server-card.mcsm-refreshing {
@@ -54,10 +61,10 @@
 
 /* Entry Title */
 .mcsm-server-card .entry-title {
-    font-size: 18px;
+    font-size: 20px;
     margin: 0 0 10px;
     font-weight: 700;
-    line-height: 1.4;
+    line-height: 1.35;
 }
 
 .mcsm-server-card .entry-title a {
@@ -71,7 +78,7 @@
 /* Post Meta */
 .mcsm-server-card .post-meta {
     margin-bottom: 15px;
-    font-size: 13px;
+    font-size: 15px;
     color: #888;
 }
 
@@ -79,6 +86,11 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
+    gap: 10px;
+}
+
+.mcsm-server-card .mcsm-status-text {
+    font-weight: 600;
 }
 
 /* Icon adjustments */
@@ -112,9 +124,14 @@
     background: #f8f9fa;
     border: 1px solid #dee2e6;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 13px;
     color: #495057;
     transition: all 0.2s;
+}
+
+.mcsm-server-desc {
+    font-size: 15px;
+    line-height: 1.45;
 }
 
 .mcsm-sub-item:hover {
@@ -137,7 +154,7 @@
 }
 
 .mcsm-status-running .mcsm-sub-indicator { background-color: #40c057; }
-.mcsm-status-stopped .mcsm-sub-indicator { background-color: #ced4da; }
+.mcsm-status-stopped .mcsm-sub-indicator { background-color: #fa5252; }
 .mcsm-status-starting .mcsm-sub-indicator,
 .mcsm-status-stopping .mcsm-sub-indicator { background-color: #fab005; }
-.mcsm-status-busy .mcsm-sub-indicator { background-color: #fa5252; }
+.mcsm-status-busy .mcsm-sub-indicator { background-color: #fab005; }

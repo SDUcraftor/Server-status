@@ -47,6 +47,7 @@ class MCSM_API {
             'daemonId'     => $daemon_id,
             'instanceUuid' => $uuid,
             'name'         => isset($item['name']) ? (string) $item['name'] : '',
+            'statusOverride' => isset($item['statusOverride']) ? (string) $item['statusOverride'] : '',
             'icon'         => isset($item['icon']) ? (string) $item['icon'] : '',
             'link'         => isset($item['link']) ? (string) $item['link'] : '',
             'tag'          => isset($item['tag']) ? (string) $item['tag'] : '',
@@ -146,6 +147,12 @@ class MCSM_API {
             ]);
             return ['error' => '无法解析 API 响应'];
         }
+
+        $this->trace([
+            'type' => 'mcsm_output',
+            'endpoint' => $endpoint,
+            'payload' => $data,
+        ]);
 
         return $data;
     }
@@ -358,7 +365,7 @@ class MCSM_API {
 
         return [$current, $max];
     }
-    
+
     /**
      * 从逐条配置中获取实例（按配置顺序输出）
      */
@@ -501,6 +508,11 @@ class MCSM_API {
         }
         if (!empty($item['description'])) {
             $server['description'] = $item['description'];
+        }
+        if (!empty($item['statusOverride']) && $item['statusOverride'] === 'maintenance') {
+            $server['statusCode'] = -1;
+            $server['statusLabel'] = '维护中';
+            $server['statusClass'] = 'busy';
         }
 
         return $server;

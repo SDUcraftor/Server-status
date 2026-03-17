@@ -75,10 +75,14 @@ else :
                 </h2>
                 <div class="post-meta">
                     <div class="mcs-status" name="<?php echo $status_code; ?>">
+                        <span class="mcsm-meta-item mcsm-status-badge">
+                            <i class="fa fa-circle mcsm-status-indicator"></i><em class="mcsm-status-text"><?php echo esc_html($status_label); ?></em>
+                        </span>
+
                         <span class="mcsm-meta-item mcsm-players">
                             <i class="fa fa-regular fa-user"></i><em class="mcsm-players-text"><?php echo esc_html($players_text); ?></em>
                         </span>
-                        
+
                         <span style="margin-left: 10px; <?php echo empty($uptime_text) ? 'display:none;' : ''; ?>" class="mcsm-meta-item mcsm-uptime">
                             <i class="fa fa-solid fa-stopwatch"></i><em class="mcsm-uptime-text"><?php echo esc_html($uptime_text); ?></em>
                         </span>
@@ -95,9 +99,6 @@ else :
                         </span>
                         <?php endif; ?>
 
-                        <span style="margin-left: 10px;" class="mcsm-meta-item mcsm-status-badge">
-                            <i class="fa fa-circle mcsm-status-indicator"></i><em class="mcsm-status-text"><?php echo esc_html($status_label); ?></em>
-                        </span>
                     </div>
                 </div>
                 <div class="float-content">
@@ -140,6 +141,6 @@ else :
 endif;
 
 if (!empty($debug_trace) && is_array($debug_trace)) : ?>
-<details class="mcsm-debug-panel"><summary>调试: 查看后端请求（已隐藏 API Key）</summary><pre><?php echo esc_html(wp_json_encode($debug_trace, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)); ?></pre></details><?php
+<details class="mcsm-debug-panel"><summary>调试: 查看后端请求 + MCSM 输出（已隐藏 API Key）</summary><pre><?php echo esc_html(wp_json_encode($debug_trace, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)); ?></pre></details><?php
 endif;
 ?></div>

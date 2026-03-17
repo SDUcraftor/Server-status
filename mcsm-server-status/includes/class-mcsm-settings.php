@@ -61,7 +61,7 @@ class MCSM_Settings {
         add_settings_field('mcsm_api_key', 'API Key', [$this, 'field_api_key'], 'mcsm-server-status', 'mcsm_section_main');
 
         add_settings_section('mcsm_section_servers', '服务器配置', [$this, 'section_servers_desc'], 'mcsm-server-status');
-        add_settings_field('mcsm_servers', '逐条服务器 JSON', [$this, 'field_servers'], 'mcsm-server-status', 'mcsm_section_servers');
+        add_settings_field('mcsm_servers', '服务器配置', [$this, 'field_servers'], 'mcsm-server-status', 'mcsm_section_servers');
 
         add_settings_section('mcsm_section_cache', '刷新与缓存', null, 'mcsm-server-status');
         add_settings_field('mcsm_refresh_interval', '前端刷新间隔（秒）', [$this, 'field_refresh_interval'], 'mcsm-server-status', 'mcsm_section_cache');
@@ -96,7 +96,7 @@ class MCSM_Settings {
                     'name'        => 'MUA Lobby',
                     'icon'        => 'https://example.com/icon.png',
                     'link'        => '/server/lobby',
-                    'tag'         => 'SJMC',
+                    'tag'         => 'SDU',
                     'description' => '大厅服务器',
                     'children'    => [
                         [
@@ -186,6 +186,7 @@ class MCSM_Settings {
             'daemonId'     => $daemon_id,
             'instanceUuid' => $instance_id,
             'name'         => isset($item['name']) ? sanitize_text_field($item['name']) : '',
+            'statusOverride' => (isset($item['statusOverride']) && in_array($item['statusOverride'], ['maintenance'], true)) ? $item['statusOverride'] : '',
             'icon'         => isset($item['icon']) ? esc_url_raw($item['icon']) : '',
             'link'         => isset($item['link']) ? esc_url_raw($item['link']) : '',
             'tag'          => isset($item['tag']) ? sanitize_text_field($item['tag']) : '',

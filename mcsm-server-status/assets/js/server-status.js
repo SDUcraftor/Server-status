@@ -94,7 +94,6 @@
                     card.setAttribute('data-showing-uuid', currentShowUuid);
                 }
             }
-
             // 更新状态 class
             var oldClasses = card.className.match(/mcsm-status-\w+/g);
             if (oldClasses) {
@@ -228,7 +227,7 @@
              }
              playersText.textContent = pText;
         }
-        
+
         // Version
         var versionText = card.querySelector('.mcsm-version-text');
         if (versionText) versionText.textContent = payload.version || '';
