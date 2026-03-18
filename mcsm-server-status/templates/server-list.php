@@ -59,13 +59,13 @@ else :
              data-uuid="<?php echo esc_attr($server['instanceUuid']); ?>" 
              data-showing-uuid="<?php echo esc_attr($server['instanceUuid']); ?>"
              itemscope="" itemtype="http://schema.org/BlogPosting" 
-             style="height: auto; min-height: 154px; will-change: auto;">
+             style="height: auto; min-height: 124px; will-change: auto;">
         
         <div class="post-content">
-            <div class="img" style="height: 64px;width: 64px;position:absolute;left: 45px;top: 45px;" name="ServerImg">
-                <img class="mcsm-icon" id="favicon_<?php echo $index; ?>" style="height: 64px;width: 64px; border-radius: 6px;" src="<?php echo esc_url($icon); ?>" alt="<?php echo esc_attr($server['name']); ?>">
+            <div class="img mcsm-server-avatar" name="ServerImg">
+                <img class="mcsm-icon" id="favicon_<?php echo $index; ?>" src="<?php echo esc_url($icon); ?>" alt="<?php echo esc_attr($server['name']); ?>">
             </div>
-            <div style="margin-left: 154px">
+            <div class="mcsm-server-main">
                 <h2 class="entry-title">
                     <?php if (!empty($server['link'])): ?>
                         <a href="<?php echo esc_url($server['link']); ?>"><?php echo $name_html; ?></a>
